@@ -1,0 +1,26 @@
+{
+  "name": "mpp-client-ex",
+  "version": "0.1.1",
+  "description": "Updated version of mpp-client-xt",
+  "main": "client.js",
+  "scripts": {
+    "build": "./node_modules/.bin/tsc *.ts"
+  },
+  "author": "Bwine127",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.18.0",
+    "@typescript-eslint/parser": "^6.18.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bwine127/mpp-client-ex"
+  }
+}
