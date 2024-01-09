@@ -12,5 +12,5 @@ This repository serves as a backup of the code for the "mpp-client-ex" project. 
 
 
 ```bash
-npm i mpp-client-ex # && rem I guess?
+npm i mpp-client-ex
 ```

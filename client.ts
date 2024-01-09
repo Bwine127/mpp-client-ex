@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {WebSocket} from 'ws';
 
 type EventNames = 
@@ -327,7 +325,7 @@ class Client extends EventEmitter {
         }
       });
 
-      this.ws.addEventListener('open', (evt) => {
+      this.ws.addEventListener('open', () => {
         this.connectionTime = Date.now();
         this.sendArray([{m: 'hi', x: 1, y: 1 || undefined}]);
         this.pingInterval = setInterval(() => {
@@ -506,7 +504,7 @@ class Client extends EventEmitter {
     return this.isConnected() && !this.isOwner() && this.getChannelSetting("crownsolo") === true;
   }
 
-  receiveServerTime(time: number, echo?: number): void {
+  receiveServerTime(time: number/*, echo?: number*/): void {
     const now = Date.now();
     const target = time - now;
     const duration = 1000;
