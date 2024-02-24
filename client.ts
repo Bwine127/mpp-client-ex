@@ -1,5 +1,4 @@
-import {WebSocket} from 'ws';
-
+import {WebSocket} from "ws";
 type EventNames = 
 | 'status'
 | 'wserror' | 'wsmessage'
@@ -24,43 +23,42 @@ type EventNames =
 | 't';
 
 interface Note {
-  n: string; /** note, string */// TODO: number style notes?
-  d: number; /** delay, when receiving from the server, number? */
-  s: boolean; /** isStop; when receiving from the server, number? */
-  v: number /** velocity; Float 0~1, When receiving from the server, number? */
+  n: string; // note, string // TODO: Check if number style notes
+  d: number; // delay, when receiving from the server, number?
+  s: boolean; // means stop; when receiving from the server, number?
+  v: number // velocity; Float 0~1, When receiving from the server, number?
 }
 
 interface Participant {
-  id?: string; /** participant id */
-  _id?: string; /** unique id */
-  name?: string;
-  color?: string;
-  x?: number; /** cursor position X, from 0 to 100. */
-  y?: number; /** cursor position Y, from 0 to 100. */
+  id?: string; // participant id
+  _id: string; // unique id
+  name: string;
+  color: string;
+  x?: number; // cursor position X, from 0 to 100.
+  y?: number; // cursor position Y, from 0 to 100.
 }
 
 interface Channel {
   _id: string;
-  id?: string; /** For MPPnet, same as _id */
   settings: ChannelSettings;
   crown?: {
-    participantId?: string; /** id of owner (not _id) */
-    userId: string; /** _id of owner (if crown dropped: _id of who dropped crown) */
-    time: number; /** Server time */
-    startPos: { /** Crown start drop from */
+    participantId?: string;
+    userId: string;
+    time: number;
+    startPos: {
       x: number;
       y: number;
     };
-    endPos: { /** Crown will dropped to */
+    endPos: {
       x: number;
       y: number;
     };
   };
-  count: number; /** How many people in channel */
+  count: number;
 }
 interface ChannelSettings {
   chat?: boolean;
-  color?: string;
+  color: string;
   visible?: boolean;
   color2?: string;
   lobby?: boolean;
@@ -69,142 +67,65 @@ interface ChannelSettings {
 }
 
 
-// Server -> client
-// Client (self) -> Client (self)
-
 interface ChatEvent {
   m: 'a';
-  a: string; /** chat message */
-  p: Participant; /** participant who chatted */
-  t: number; /** server time */
-}
-
-interface ByeEvent {
-  m: 'bye';
-  p: string; /** Participant ID, not _id */
+  a: string;
+  p: Participant;
 }
 
 interface ChatHistoryEvent {
   m: 'c';
-  c: ChatEvent[]; /** Chat history that contains ChatEvent */
-  t: number; /** server time */
-}
-
-interface ChannelEvent {
-  m: 'ch';
-  ch: Channel;
-  ppl: Participant[];
-  p: string; /** Your Participant ID */
-}
-
-interface HiEvent {
-  m: 'hi';
-  t: number; /** Server time */
-  u: Participant; /** Your participant information except id(=participant ID, not means _id(unique ID)) */
-  motd: string;
-  e?: number;
-}
-
-interface LSEvent {
-  m: 'ls';
-  c: boolean; /** is a complete list of channels ? "u" is an array with every channel : "u" is an array with channels to update information for. */
-  u: Channel[];
-}
-
-interface MouseEvent { // fuck libdom.d.ts !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  m: 'm';
-  id: string; /** Participant ID, not _id */
-  readonly x: number;
-  readonly y: number;
-}
-
-interface NotificationEvent {
-  m: 'notification';
-  duration?: number;
-  class?: string;
-  id?: string;
-  title?: string;
-  text?: string;
-  html?: string;
-  target?: string;
+  c: ChatEvent[];
+  t: number;
 }
 
 interface NoteEvent {
   m: 'n';
-  n: Note[]; /**  */// TODO: Check is another servers can send n which is just Note, not Note[]
-  p: Participant; /** Participant */
-  t: number; /** Server time */
+  // Add properties specific to NoteEvent
 }
 
-interface NoteQuotaEvent {
-  m: 'nq';
-  maxHistLen: number; /** How many periods of 2 seconds should be buffered. This is always 3. (copy of https://github.com/mppnet/frontend/blob/main/docs/protocol.md#nq) */
-  allowance: number; /** The amount of note on or offs that a participant can send per 2 seconds consistently. (copy of https://github.com/mppnet/frontend/blob/main/docs/protocol.md#nq) */
-  max: number /** The maximum amount of note on or offs that a participant can send per 6 seconds. (copy of https://github.com/mppnet/frontend/blob/main/docs/protocol.md#nq) */
+interface MouseEvent {
+  m: 'm';
+  // Add properties specific to MouseEvent
 }
 
-interface ParticipantEvent extends Participant { /** A "p" message is usually sent when a participant is added from the client's channel. Sometimes participant additions sent with "ch" messages instead. (description copy of https://github.com/mppnet/frontend/blob/main/docs/protocol.md#p) */
-  m?: 'p';
-}
-
-interface PingEvent {
-  m: 't';
-  t: number; /** Server time */
-  e?: number; /** Client time, echo. */
-}
+// Union type for all event types
+type AllEvents = ChatEvent | ChatHistoryEvent | NoteEvent | MouseEvent;
 
 type EventListeners = {
-  'a': (event: ChatEvent) => void;
-  'bye': (event: ByeEvent) => void;
-  'c': (event: ChatHistoryEvent) => void;
-  'ch': (event: ChannelEvent) => void;
-  'hi': (event: HiEvent) => void;
-  'ls': (event: LSEvent) => void;
-  'm': (event: MouseEvent) => void;
-  'n': (event: NoteEvent) => void;
-  'nq': (event: NoteQuotaEvent) => void;
-  'p': (event: ParticipantEvent) => void;
-  't': (event: PingEvent) => void;
-  'notification': (event: NotificationEvent) => void;
-
-  'wsmessage': (data: any) => void; /** ws.onmessage = emit('wsmessaage',evt.data) */
-  'wserror': (error: any) => void;
-  'connect': () => void;
-  'disconnect': (data?: any) => void;
-  'participant added': (event: ParticipantEvent) => void;
-  'participant update': (event: ParticipantEvent) => void;
-  'participant removed': (event: ParticipantEvent) => void;
-  'status': (event: string) => void;
-  'count': (data: number) => void;
-
-//  [key: string]: (...data: any) => any;
+  'a': (data: ChatEvent) => void;
+  'c': (data: ChatHistoryEvent) => void;
+  'n': (data: NoteEvent) => void;
+  'm': (data: MouseEvent) => void;
+  // Add more event types as needed
 };
 
-type AllEvents = Parameters<Exclude<(EventListeners[keyof EventListeners]), (...args: any[]) => any>>[0]; // ChatGPT Edition
 
-class EventEmitter {
-  /* eslint-disable @typescript-eslint/ban-types */
+/**
+ * @typedef {'status' | 'wserror' | 'wsmessage' | 'connect' | 'disconnect' | 'participant update' | 'participant added' | 'participant removed' | 'count' | 'a' | 'b' | 'bye' | 'c' | 'ch' | 'hi' | 'ls' | 'm' | 'n' | 'notification' | 'nq' | 'p' | 't'} EventNames
+ */
+class MyEventEmitter {
   private listeners: Map<string, Function[]> = new Map();
 
   constructor() {
     this.listeners = new Map();
   }
-
-  /** Add a listener function for the specified event.
-   * @param {keyof EventListeners} event
-   * @param {(data: AllEvents) => void} listener - The function to be called when the event occurs.
+  /**
+   * @param {EventNames} event
+   * @param {Function} listener
    */
-  on<T extends keyof EventListeners>(event: T, listener: EventListeners[T]): void {
-    if (!this.listeners.has(event as string)) this.listeners.set(event, []);
-    this.listeners.get(event as string)?.push(listener);
+  on(event: EventNames, listener: Function): void {
+    if (!this.listeners.has(event)) this.listeners.set(event, []);
+    this.listeners.get(event)?.push(listener);
     return;
   }
+  
 
-  /** Remove a listener function for the specified event.
+  /**
    * @param {EventNames} event
-   * @param {Function} listener - The listener function to be removed.
+   * @param {Function} listener
    */
-  off(event: EventNames | string, listener: Function): void {
+  off(event: EventNames, listener: Function): void {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
       const index = eventListeners.indexOf(listener);
@@ -215,33 +136,33 @@ class EventEmitter {
     return;
   }
 
-  /** Add a one-time listener function for the specified event.
-   * @param {keyof EventListeners} event
-   * @param {(data: AllEvents) => void} listener - The function to be called once when the event occurs.
+  /**
+   * @param {EventNames} event
+   * @param {Function} listener
    */
-  once<T extends keyof EventListeners>(event: T, listener: EventListeners[T]): void {
+  once(event: EventNames, listener: Function): void {
     const wrapper = (...args: any[]) => {
       this.off(event, wrapper);
-      listener(args);
+      listener.apply(null, args);
     };
     return this.on(event, wrapper);
   }
 
-  /** Emit an event, calling all registered listener functions for that event.
+  /**
    * @param {EventNames} event
-   * @param {...any} args - Arguments to be passed to the event listener functions.
+   * @param {Function} listener
    */
-  emit(event: EventNames | string, ...args: any) {
+  emit(event: EventNames, ...args: any) {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
       for (const listener of eventListeners) {
-        listener(null, args);
+        listener.apply(null, args);
       }
     }
   }
 }
 
-class Client extends EventEmitter {
+class Client extends MyEventEmitter {
   uri: string;
   ws?: WebSocket;
   serverTimeOffset: number = 0;
@@ -251,23 +172,25 @@ class Client extends EventEmitter {
   ppl: { [key: string]: Participant } = {};
   connectionTime?: number;
   desiredChannelId?: string;
-  desiredChannelSettings: ChannelSettings = {color: '#ecfaed'};
+  desiredChannelSettings: ChannelSettings = { color:"#ecfaed" };
   pingInterval?: NodeJS.Timeout;
   canConnect: boolean = false;
   noteBuffer: Note[] = [];
   noteBufferTime: number = 0;
   noteFlushInterval?: NodeJS.Timeout;
-  offlineParticipant: Participant = {_id: '', name: '', color: '#777'};
+  token?: string;
+  offlineParticipant: Participant = { _id: "", name: "", color: "#777" };
 
-  constructor(uri?: string/*, token?: string, proxy?: string*/) { // TODO: Support token for MPPnet and proxy for another servers (piano.owop?)
+  constructor(uri?: string, token?: string) {
     super();
-    this.uri = uri || 'wss://game.multiplayerpiano.com:443';
+    this.uri = uri || "wss://game.multiplayerpiano.com:443";
+    this.token = token;
     this.bindEventListeners();
-    this.emit('status', '(Offline mode)');
+    this.emit("status", "(Offline mode)");
   }
 
   isSupported(): boolean {
-    return typeof WebSocket === 'function';
+    return typeof WebSocket === "function";
   }
 
   isConnected(): boolean {
@@ -294,13 +217,13 @@ class Client extends EventEmitter {
     if (!this.canConnect || !this.isSupported() || this.isConnected() || this.isConnecting()) {
       return;
     }
-    this.emit('status', 'Connecting...');
+    this.emit("status", "Connecting...");
     this.ws = new WebSocket(this.uri, {
-      origin: 'https://game.multiplayerpiano.com',
+      origin: "https://game.multiplayerpiano.com",
     });
 
     if (this.ws) {
-      this.ws.addEventListener('close', (evt) => {
+      this.ws.addEventListener("close", (evt) => {
         this.user = undefined;
         this.participantId = undefined;
         this.channel = undefined;
@@ -308,8 +231,8 @@ class Client extends EventEmitter {
         clearInterval(this.pingInterval!);
         clearInterval(this.noteFlushInterval!);
 
-        this.emit('disconnect', evt);
-        this.emit('status', 'Offline mode');
+        this.emit("disconnect", evt);
+        this.emit("status", "Offline mode");
 
         // reconnect
         if (this.connectionTime) {
@@ -318,38 +241,39 @@ class Client extends EventEmitter {
         setTimeout(this.connect.bind(this), 25);
       });
 
-      this.ws.addEventListener('error', (err) => {
-        this.emit('wserror', err);
+      this.ws.addEventListener("error", (err) => {
+        this.emit("wserror", err);
         if (this.ws) {
           this.ws.close();
         }
       });
 
-      this.ws.addEventListener('open', () => {
+      this.ws.addEventListener("open", (evt) => {
         this.connectionTime = Date.now();
-        this.sendArray([{m: 'hi', x: 1, y: 1 || undefined}]);
+        this.sendArray([{ m: "hi", x: 1, y: 1, token: this.token }]);
         this.pingInterval = setInterval(() => {
-          this.sendArray([{m: 't', e: Date.now()}]);
+          this.sendArray([{ m: "t", e: Date.now() }]);
         }, 20000);
-        this.sendArray([{m: 't', e: Date.now()}]);
+        this.sendArray([{ m: "t", e: Date.now() }]);
         this.noteBuffer = [];
         this.noteBufferTime = 0;
         this.noteFlushInterval = setInterval(() => {
           if (this.noteBufferTime && this.noteBuffer.length > 0) {
             this.sendArray([
-              {m: 'n', t: this.noteBufferTime + this.serverTimeOffset, n: this.noteBuffer},
+              { m: "n", t: this.noteBufferTime + this.serverTimeOffset, n: this.noteBuffer },
             ]);
             this.noteBufferTime = 0;
             this.noteBuffer = [];
           }
         }, 100);
 
-        this.emit('connect');
-        this.emit('status', 'Joining channel...');
+        this.emit("connect");
+        this.emit("status", "Joining channel...");
       });
 
-      this.ws.addEventListener('message', (evt) => {
-        this.emit('wsmessage', evt.data);
+      this.ws.addEventListener("message", (evt) => {
+        console.log(evt.data);
+        this.emit('wsmessage', evt.data as string);
         const transmission = JSON.parse(evt.data as string);
         for (let i = 0; i < transmission.length; i++) {
           const msg = transmission[i];
@@ -360,10 +284,8 @@ class Client extends EventEmitter {
   }
 
   bindEventListeners(): void {
-    /* eslint-disable @typescript-eslint/no-this-alias */
-    /* eslint-disable prefer-const */
     let self = this;
-    this.on('hi', (msg) => {
+    this.on("hi", (msg) => {
       self.user = msg.u;
       self.receiveServerTime(msg.t, msg.e || undefined);
       if (self.desiredChannelId) {
@@ -371,11 +293,11 @@ class Client extends EventEmitter {
       }
     });
 
-    this.on('t', (msg) => {
+    this.on("t", (msg) => {
       self.receiveServerTime(msg.t, msg.e || undefined);
     });
 
-    this.on('ch', (msg) => {
+    this.on("ch", (msg) => {
       self.desiredChannelId = msg.ch._id;
       self.desiredChannelSettings = msg.ch.settings;
       self.channel = msg.ch;
@@ -383,13 +305,15 @@ class Client extends EventEmitter {
       self.setParticipants(msg.ppl);
     });
 
-    this.on('p', (msg) => {
+    this.on("p", (msg) => {
       self.participantUpdate(msg);
-      msg.id && self.emit("participant update", self.findParticipantById(msg.id));
+      self.emit("participant update", self.findParticipantById(msg.id));
     });
 
     this.on("m", (msg) => {
-      self.participantUpdate(msg);
+      if (self.ppl.hasOwnProperty(msg.id)) {
+        self.participantUpdate(msg);
+      }
     });
 
     this.on("bye", (msg) => {
@@ -400,10 +324,12 @@ class Client extends EventEmitter {
   send(raw: string): void {
     if (this.isConnected() && this.ws) {
       this.ws.send(raw);
+      console.log(raw)
     }
   }
 
   sendArray(arr: object[]): void {
+    console.log(arr)
     this.send(JSON.stringify(arr));
   }
 
@@ -414,11 +340,11 @@ class Client extends EventEmitter {
   }
 
   getChannelSetting(key: string): string | boolean | undefined {
-    let keys: keyof ChannelSettings; // @ts-ignore; next line
-    if (!this.isConnected() || !this.channel?.settings || !keys.includes(key)) {
-      return key == 'color' ? '#ecfaed' : undefined // my old shit: key == 'color' && '#ecfaed' || undefined
-    } // @ts-ignore; next line
-    return this.channel?.settings[key];
+    if (!this.isConnected() || !this.channel || !this.channel.settings) {
+      if(key=='color')return '#ecfaed';
+      else return;
+    }
+    return this.channel.settings[key];
   }
 
   setChannelSettings(settings: ChannelSettings): void {
@@ -426,10 +352,10 @@ class Client extends EventEmitter {
       return;
     }
     if (this.desiredChannelSettings) {
-      let keys: keyof ChannelSettings;
       for (const key in settings) {
-        if (Object.prototype.hasOwnProperty.call(settings, key)) { // @ts-ignore; next line
-          if (keys.includes(key)) return this.desiredChannelSettings[key] = settings[key];
+        if (settings.hasOwnProperty(key)) {
+          let keys: keyof ChannelSettings;
+          if(keys.includes(key)) return this.desiredChannelSettings[key] = settings[key]; // @ts-ignore VSCode Sucks
         }
       }
       this.sendArray([{ m: "chset", set: this.desiredChannelSettings }]);
@@ -444,7 +370,7 @@ class Client extends EventEmitter {
   setParticipants(ppl: Participant[]): void {
     // remove participants who left
     for (const id in this.ppl) {
-      if (Object.prototype.hasOwnProperty.call(ppl, id)) {
+      if (this.ppl.hasOwnProperty(id)) {
         let found = false;
         for (let j = 0; j < ppl.length; j++) {
           if (ppl[j].id === id) {
@@ -464,10 +390,16 @@ class Client extends EventEmitter {
   }
 
   countParticipants(): number {
-    return Object.keys(this.ppl).length;
+    let count = 0;
+    for (const i in this.ppl) {
+      if (this.ppl.hasOwnProperty(i)) {
+        ++count;
+      }
+    }
+    return count;
   }
 
-  participantUpdate(update: Participant | MouseEvent): void {
+  participantUpdate(update: Participant): void {
     if(!update.id) return;
     let part = this.ppl[update.id] || null;
     if (part === null) {
@@ -475,20 +407,20 @@ class Client extends EventEmitter {
       this.emit("participant added", update);
       this.emit("count", this.countParticipants());
     } else {
-      if(update.x)          part.x = update.x;
-      if(update.y)          part.y = update.y;
-      if('name' in update)  part.name = update.name || part.name;
-      if('color' in update) part.color = update.color || part.color;
+      if(update.x)     part.x = update.x;
+      if(update.y)     part.y = update.y;
+      if(update.color) part.color = update.color;
+      if(update.name)  part.name = update.name;
     }
     return;
   }
 
   removeParticipant(id: string): void {
-    if (Object.prototype.hasOwnProperty.call(this.ppl, id)) {
+    if (this.ppl.hasOwnProperty(id)) {
       const part = this.ppl[id];
       delete this.ppl[id];
-      this.emit('participant removed', part);
-      this.emit('count', this.countParticipants());
+      this.emit("participant removed", part);
+      this.emit("count", this.countParticipants());
     }
   }
 
@@ -504,7 +436,7 @@ class Client extends EventEmitter {
     return this.isConnected() && !this.isOwner() && this.getChannelSetting("crownsolo") === true;
   }
 
-  receiveServerTime(time: number/*, echo?: number*/): void {
+  receiveServerTime(time: number, echo?: number): void {
     const now = Date.now();
     const target = time - now;
     const duration = 1000;
@@ -524,11 +456,11 @@ class Client extends EventEmitter {
 
   startNote(note: string, vel: number = 0.5): void {
     if (this.isConnected()) {
-      if (this.noteBufferTime) {
-        this.noteBuffer.push({d: Date.now() - this.noteBufferTime, n: note, v: +(vel.toFixed(3)), s: false});
-      } else {
+      if (!this.noteBufferTime) {
         this.noteBufferTime = Date.now();
         this.noteBuffer.push({ d: 0, n: note, v: +(vel.toFixed(3)), s: false});
+      } else {
+        this.noteBuffer.push({ d: Date.now() - this.noteBufferTime, n: note, v: +(vel.toFixed(3)), s: false });
       }
     }
   }
@@ -543,53 +475,7 @@ class Client extends EventEmitter {
       }
     }
   }
-
-
-  say(message: string): void {
-    this.sendArray([{m: 'a', message}]);
-  }
-
-  userset(set: Participant) {
-    this.sendArray([{m: 'userset', set}]);
-    if(set.x || set.y) this.moveMouse(set.x,set.y);
-  }
-
-  setName(name: string) {
-    this.userset({name});
-  }
-
-  moveMouse(x: number = NaN, y: number = NaN) {
-    this.sendArray([{m: 'm', x, y}]);
-  }
-
-  kickBan(_id: string, ms: number) {
-    this.ban(_id, ms);
-  }
-
-  kickban(_id: string, ms: number) {
-    this.ban(_id, ms);
-  }
-
-  ban(_id: string, ms: number = 0) {
-    this.sendArray([{m: 'kickban', _id, ms}]);
-  }
-
-  kick(_id: string) {
-    this.ban(_id, 0);
-  }
-
-  chown(id: string) {
-    this.sendArray([{m: 'chown', id}]);
-  }
-
-  chset(set: ChannelSettings) {
-    this.sendArray([{m: 'chset', set}]);
-  }
-
-  unban(_id: string) {
-    this.sendArray([{m:'unban', _id}]);
-  }
 }
 
+//module.exports = Client;
 export default Client;
-module.exports = Client;
