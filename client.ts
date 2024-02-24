@@ -23,19 +23,19 @@ type EventNames =
 | 't';
 
 interface Note {
-  n: string; // note, string // TODO: Check if number style notes
-  d: number; // delay, when receiving from the server, number?
-  s: boolean; // means stop; when receiving from the server, number?
-  v: number // velocity; Float 0~1, When receiving from the server, number?
+  n: string; /** note, string */// TODO: Check if number or another notes
+  d: number; /** delay in ms, number? */
+  s: boolean; /** is stopping note; number? */
+  v: number /** velocity (volume); 0.0 ~ 1.0 (upto 1.3), number? */
 }
 
 interface Participant {
-  id?: string; // participant id
-  _id: string; // unique id
+  id?: string; /** participant id */
+  _id: string; /** unique id */
   name: string;
   color: string;
-  x?: number; // cursor position X, from 0 to 100.
-  y?: number; // cursor position Y, from 0 to 100.
+  x?: number; /** cursor position X, from 0 to 100. */
+  y?: number; /** cursor position Y, from 0 to 100. */
 }
 
 interface Channel {
@@ -65,40 +65,6 @@ interface ChannelSettings {
   crownsolo?: boolean;
   'no cussing'?: boolean;
 }
-
-
-interface ChatEvent {
-  m: 'a';
-  a: string;
-  p: Participant;
-}
-
-interface ChatHistoryEvent {
-  m: 'c';
-  c: ChatEvent[];
-  t: number;
-}
-
-interface NoteEvent {
-  m: 'n';
-  // Add properties specific to NoteEvent
-}
-
-interface MouseEvent {
-  m: 'm';
-  // Add properties specific to MouseEvent
-}
-
-// Union type for all event types
-type AllEvents = ChatEvent | ChatHistoryEvent | NoteEvent | MouseEvent;
-
-type EventListeners = {
-  'a': (data: ChatEvent) => void;
-  'c': (data: ChatHistoryEvent) => void;
-  'n': (data: NoteEvent) => void;
-  'm': (data: MouseEvent) => void;
-  // Add more event types as needed
-};
 
 
 /**
@@ -172,7 +138,7 @@ class Client extends MyEventEmitter {
   ppl: { [key: string]: Participant } = {};
   connectionTime?: number;
   desiredChannelId?: string;
-  desiredChannelSettings: ChannelSettings = { color:"#ecfaed" };
+  desiredChannelSettings: ChannelSettings = { color: "#ecfaed" };
   pingInterval?: NodeJS.Timeout;
   canConnect: boolean = false;
   noteBuffer: Note[] = [];
@@ -272,7 +238,6 @@ class Client extends MyEventEmitter {
       });
 
       this.ws.addEventListener("message", (evt) => {
-        console.log(evt.data);
         this.emit('wsmessage', evt.data as string);
         const transmission = JSON.parse(evt.data as string);
         for (let i = 0; i < transmission.length; i++) {
@@ -324,12 +289,10 @@ class Client extends MyEventEmitter {
   send(raw: string): void {
     if (this.isConnected() && this.ws) {
       this.ws.send(raw);
-      console.log(raw)
     }
   }
 
   sendArray(arr: object[]): void {
-    console.log(arr)
     this.send(JSON.stringify(arr));
   }
 
@@ -355,7 +318,7 @@ class Client extends MyEventEmitter {
       for (const key in settings) {
         if (settings.hasOwnProperty(key)) {
           let keys: keyof ChannelSettings;
-          if(keys.includes(key)) return this.desiredChannelSettings[key] = settings[key]; // @ts-ignore VSCode Sucks
+          if(keys.includes(key)) return this.desiredChannelSettings[key] = settings[key]; // @ts-ignore fuck!!!
         }
       }
       this.sendArray([{ m: "chset", set: this.desiredChannelSettings }]);
