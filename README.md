@@ -1,6 +1,6 @@
 # mpp-client-ex
 
-This repository serves as a backup of the code for the "mpp-client-ex" project. It is used for practice purposes as I didn't use Git before for now.
+This repository serves as a backup of the code for the "mpp-client-ex" project.
 
 ## Project Overview
 
